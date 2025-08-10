@@ -21,7 +21,7 @@ def main():
 
     # Install MySQL (MariaDB is default in AlmaLinux 8)
     run_command("dnf -y install mariadb-server", "Installing MariaDB server")
-    run_command("mariadbd --user=mysql --daemonize", "Starting MariaDB server")
+    run_command("mysqld_safe --skip-networking=0 &", "Starting MariaDB server")
 
     # Firewall settings (optional — firewalld may not be running in CI)
     try:
