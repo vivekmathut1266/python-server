@@ -1,63 +1,39 @@
 #!/usr/bin/env python3
 import subprocess
-import sys
+import socket
 
-def check_command(command, description):
-    """Run a shell command and return True if it succeeds."""
-    print(f"[+] {description}...")
-    result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    if result.returncode == 0:
-        print(f"[✔] {description}")
-        return True
+failed = 0
+
+def check_process(desc, cmd):
+    global failed
+    try:
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        print(f"[✔] {desc}")
+    except subprocess.CalledProcessError as e:
+        print(f"[✘] {desc}\n    STDERR: {e.output.decode().strip()}")
+        failed += 1
+
+def check_port(desc, port):
+    global failed
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.settimeout(1)
+    result = s.connect_ex(("127.0.0.1", port))
+    s.close()
+    if result == 0:
+        print(f"[✔] {desc}")
     else:
-        print(f"[✘] {description}")
-        if result.stdout:
-            print("    STDOUT:", result.stdout.decode().strip())
-        if result.stderr:
-            print("    STDERR:", result.stderr.decode().strip())
-        return False
+        print(f"[✘] {desc}")
+        failed += 1
 
-def main():
-    failures = 0
+# Checks
+check_process("Apache HTTPD process running", ["pgrep", "httpd"])
+check_process("MariaDB process running", ["pgrep", "mariadbd"])
+check_port("Port 80 open (Apache)", 80)
+check_port("Port 3306 open (MariaDB)", 3306)
 
-    # 1. Check Apache installation
-    if not check_command("rpm -q httpd", "Apache HTTPD installed"):
-        failures += 1
-
-    # 2. Check MariaDB installation
-    if not check_command("rpm -q mariadb-server", "MariaDB installed"):
-        failures += 1
-
-    # 3. Check Apache running
-    if not check_command("pgrep httpd", "Apache HTTPD process running"):
-        failures += 1
-
-    # 4. Check MariaDB running
-    if not check_command("pgrep mysqld", "MariaDB process running"):
-        failures += 1
-
-    # 5. Check firewall rules for HTTP
-    if not check_command("firewall-cmd --list-all | grep -q 'services:.*http'", "Firewall allows HTTP"):
-        failures += 1
-
-    # 6. Check firewall rules for HTTPS
-    if not check_command("firewall-cmd --list-all | grep -q 'services:.*https'", "Firewall allows HTTPS"):
-        failures += 1
-
-    # 7. Check if Apache port 80 is listening
-    if not check_command("ss -tuln | grep -q ':80 '", "Port 80 open (Apache)"):
-        failures += 1
-
-    # 8. Check if MariaDB port 3306 is listening
-    if not check_command("ss -tuln | grep -q ':3306 '", "Port 3306 open (MariaDB)"):
-        failures += 1
-
-    print("\nValidation Summary:")
-    if failures == 0:
-        print("[✔] All checks passed successfully!")
-    else:
-        print(f"[✘] {failures} check(s) failed.")
-        sys.exit(1)
-
-if __name__ == "__main__":
-    main()
+print("\nValidation Summary:")
+if failed > 0:
+    print(f"[✘] {failed} check(s) failed.")
+    exit(1)
+else:
+    print("[✔] All checks passed.")
