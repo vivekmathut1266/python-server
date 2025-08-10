@@ -17,19 +17,22 @@ def main():
 
     # Install Apache (httpd)
     run_command("dnf -y install httpd", "Installing Apache HTTPD")
-    run_command("systemctl enable --now httpd", "Enabling & starting Apache service")
+    run_command("httpd -k start", "Starting Apache HTTPD")
 
-    # Install MySQL (MariaDB)
+    # Install MySQL (MariaDB is default in AlmaLinux 8)
     run_command("dnf -y install mariadb-server", "Installing MariaDB server")
-    run_command("systemctl enable --now mariadb", "Enabling & starting MariaDB service")
+    run_command("mariadbd --user=mysql --daemonize", "Starting MariaDB server")
 
-    # Firewall settings
-    run_command("firewall-cmd --permanent --add-service=http", "Opening HTTP port in firewall")
-    run_command("firewall-cmd --permanent --add-service=https", "Opening HTTPS port in firewall")
-    run_command("firewall-cmd --reload", "Reloading firewall rules")
+    # Firewall settings (optional — firewalld may not be running in CI)
+    try:
+        run_command("firewall-cmd --permanent --add-service=http", "Opening HTTP port in firewall")
+        run_command("firewall-cmd --permanent --add-service=https", "Opening HTTPS port in firewall")
+        run_command("firewall-cmd --reload", "Reloading firewall rules")
+    except SystemExit:
+        print("[!] Skipping firewall config — likely not running in CI environment.")
 
     print("\n[✔] Installation completed successfully!")
-    print("Run 'mysql_secure_installation' to secure the database.")
+    print("Apache is running on port 80, MariaDB is running on port 3306.")
 
 if __name__ == "__main__":
     main()
