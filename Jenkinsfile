@@ -12,32 +12,21 @@ pipeline {
 
         stage('Build AlmaLinux Image') {
             steps {
-                sh 'docker build -t almalinux-systemd .'
+                sh 'docker build -t almalinux-ci .'
             }
         }
 
-        stage('Run Installation & Validation') {
+        stage('Run Container & Execute Scripts') {
             steps {
                 sh '''
-                # Remove any old container
-                docker rm -f almalinux-ci || true
+                docker rm -f almalinux-ci-run || true
+                docker run --name almalinux-ci-run -d almalinux-ci sleep infinity
 
-                # Start AlmaLinux container
-                docker run --privileged --name almalinux-ci \
-                    -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
-                    -d almalinux-systemd
+                docker cp install_services.py almalinux-ci-run:/root/install_services.py
+                docker exec almalinux-ci-run python3 /root/install_services.py
 
-                # Copy scripts into container
-                docker cp install_services.py almalinux-ci:/root/install_services.py
-                docker cp validate_installation.py almalinux-ci:/root/validate_installation.py
-
-                # Run installation
-                echo "[INFO] Running installation script..."
-                docker exec almalinux-ci python3 /root/install_services.py
-
-                # Run validation
-                echo "[INFO] Running validation script..."
-                docker exec almalinux-ci python3 /root/validate_installation.py
+                docker cp validate_installation.py almalinux-ci-run:/root/validate_installation.py
+                docker exec almalinux-ci-run python3 /root/validate_installation.py
                 '''
             }
         }
@@ -45,7 +34,7 @@ pipeline {
 
     post {
         always {
-            sh 'docker rm -f almalinux-ci || true'
+            sh 'docker rm -f almalinux-ci-run || true'
         }
     }
 }
