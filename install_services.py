@@ -13,23 +13,23 @@ def run_command(command, description):
 
 def main():
     # Update system
-    run_command("sudo dnf -y update", "Updating system packages")
+    run_command("dnf -y update", "Updating system packages")
 
     # Install Apache (httpd)
-    run_command("sudo dnf -y install httpd", "Installing Apache HTTPD")
-    run_command("sudo systemctl enable --now httpd", "Enabling & starting Apache service")
+    run_command("dnf -y install httpd", "Installing Apache HTTPD")
+    run_command("systemctl enable --now httpd", "Enabling & starting Apache service")
 
-    # Install MySQL (MariaDB is default in AlmaLinux 8)
-    run_command("sudo dnf -y install mariadb-server", "Installing MariaDB server")
-    run_command("sudo systemctl enable --now mariadb", "Enabling & starting MariaDB service")
+    # Install MySQL (MariaDB)
+    run_command("dnf -y install mariadb-server", "Installing MariaDB server")
+    run_command("systemctl enable --now mariadb", "Enabling & starting MariaDB service")
 
     # Firewall settings
-    run_command("sudo firewall-cmd --permanent --add-service=http", "Opening HTTP port in firewall")
-    run_command("sudo firewall-cmd --permanent --add-service=https", "Opening HTTPS port in firewall")
-    run_command("sudo firewall-cmd --reload", "Reloading firewall rules")
+    run_command("firewall-cmd --permanent --add-service=http", "Opening HTTP port in firewall")
+    run_command("firewall-cmd --permanent --add-service=https", "Opening HTTPS port in firewall")
+    run_command("firewall-cmd --reload", "Reloading firewall rules")
 
     print("\n[✔] Installation completed successfully!")
-    print("You can run 'sudo mysql_secure_installation' to secure the database.")
+    print("Run 'mysql_secure_installation' to secure the database.")
 
 if __name__ == "__main__":
     main()
