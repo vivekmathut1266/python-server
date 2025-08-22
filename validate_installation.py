@@ -27,9 +27,9 @@ def check_port(desc, port):
 
 # Checks
 check_process("Apache HTTPD process running", ["pgrep", "httpd"])
-check_process("MariaDB process running", ["pgrep", "mariadbd"])
+check_process("Redis server process running", ["pgrep", "redis-server"])
 check_port("Port 80 open (Apache)", 80)
-check_port("Port 3306 open (MariaDB)", 3306)
+check_port("Port 6379 open (Redis)", 6379)
 
 print("\nValidation Summary:")
 if failed > 0:
