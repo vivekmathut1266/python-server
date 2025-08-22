@@ -15,7 +15,8 @@ def run_command(command, description, check=True, background=False):
         if check:
             exit(1)
 
-def wait_for_port(port, timeout=60):
+def wait_for_port(port, timeout=30):
+    """Wait until a port is open or timeout reached."""
     for _ in range(timeout):
         result = subprocess.run(
             f"ss -ltn | grep ':{port} '", shell=True, stdout=subprocess.PIPE
@@ -36,17 +37,13 @@ def main():
     run_command("httpd -k start", "Starting Apache HTTPD", background=False)
     wait_for_port(80)
 
-    # Install MariaDB
-    run_command("dnf -y install mariadb-server", "Installing MariaDB server")
-    run_command(
-        "mysqld_safe --skip-grant-tables=0 --bind-address=0.0.0.0 &",
-        "Starting MariaDB server",
-        background=True
-    )
-    wait_for_port(3306, timeout=60)
+    # Install Redis
+    run_command("dnf -y install redis", "Installing Redis server")
+    run_command("redis-server --daemonize yes", "Starting Redis server", background=False)
+    wait_for_port(6379, timeout=30)
 
     print("\n[✔] Installation completed successfully!")
-    print("Apache is running on port 80, MariaDB is running on port 3306.")
+    print("Apache is running on port 80, Redis is running on port 6379.")
 
 if __name__ == "__main__":
     main()
